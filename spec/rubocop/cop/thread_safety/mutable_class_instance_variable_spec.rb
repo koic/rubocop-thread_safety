@@ -4,11 +4,6 @@ RSpec.describe RuboCop::Cop::ThreadSafety::MutableClassInstanceVariable,
                :config do
   subject(:cop) { described_class.new(config) }
   let(:msg) { 'Freeze mutable objects assigned to class instance variables.' }
-  if Gem::Requirement.new('< 0.69')
-                     .satisfied_by?(Gem::Version.new(RuboCop::Version::STRING))
-    let(:ruby_version) { 2.3 }
-  end
-
   let(:prefix) { nil }
   let(:suffix) { nil }
   let(:indent) { '' }
@@ -23,9 +18,9 @@ RSpec.describe RuboCop::Cop::ThreadSafety::MutableClassInstanceVariable,
   shared_examples 'mutable objects' do |o|
     context 'when assigning with =' do
       it "registers an offense for #{o} assigned to a class ivar" do
-        expect_offense(surround(<<~RUBY))
-          @var = #{o}
-                 #{'^' * o.length} #{msg}
+        expect_offense(surround(<<~RUBY), o: o)
+          @var = %{o}
+                 ^{o} #{msg}
         RUBY
 
         expect_correction(surround(<<~RUBY))
@@ -36,9 +31,9 @@ RSpec.describe RuboCop::Cop::ThreadSafety::MutableClassInstanceVariable,
 
     context 'when assigning with ||=' do
       it "registers an offense for #{o} assigned to a class ivar" do
-        expect_offense(surround(<<~RUBY))
-          @var ||= #{o}
-                   #{'^' * o.length} #{msg}
+        expect_offense(surround(<<~RUBY), o: o)
+          @var ||= %{o}
+                   ^{o} #{msg}
         RUBY
 
         expect_correction(surround(<<~RUBY))
@@ -485,10 +480,9 @@ RSpec.describe RuboCop::Cop::ThreadSafety::MutableClassInstanceVariable,
         context 'when assigning with an operator' do
           shared_examples 'operator methods' do |o|
             it 'registers an offense' do
-              c = '^' * o.length
-              expect_offense(surround(<<~RUBY))
-                @var = FOO #{o} BAR
-                       ^^^^#{c}^^^^ #{msg}
+              expect_offense(surround(<<~RUBY), o: o)
+                @var = FOO %{o} BAR
+                       ^^^^^{o}^^^^ #{msg}
               RUBY
 
               expect_correction(surround(<<~RUBY))
